@@ -12,56 +12,14 @@ const PIECE_TYPES = {
 const cells = [];
 let selectedCell = null;
 
-/*----- functions -----*/
-function handleCellClick(event) {
-  const cell = event.target;
-  if (!selectedCell) {
-    if (cell.classList.contains('piece')) {
-      selectedCell = cell;
-      cell.classList.add('selected');
-    }
-  } else {
-    if (cell.classList.contains('selected')) {
-      cell.classList.remove('selected');
-      selectedCell = null;
-    } else {
-      movePiece(selectedCell, cell);
-      selectedCell.classList.remove('selected');
-      selectedCell = null;
-    }
-  }
-}
-
-function movePiece(fromCell, toCell) {
-  if (isValidMove(fromCell, toCell)) {
-    // Move the piece
-    toCell.appendChild(fromCell.querySelector('.piece'));
-
-    // Clear the fromCell
-    fromCell.innerHTML = '';
-
-    // Implement crown logic for kinged pieces if needed
-    checkKingPiece(toCell);
-  }
-}
-
-function isValidMove(fromCell, toCell) {
-  // Implement your move validation logic here
-  // Check if the move is valid according to the rules
-  // Return true if valid, false otherwise
-  return true;
-}
-
-function checkKingPiece(cell) {
-  // Implement crowning logic here if a piece becomes a king
-}
-
-/*----- cached elements  -----*/
+/*----- cached elements -----*/
+const board = document.getElementById('board');
+const gameOverModal = document.getElementById('gameOverModal');
+const modalMessage = document.getElementById('modalMessage');
+const closeModalButton = document.getElementById('closeModal');
 
 /*----- event listeners -----*/
 document.addEventListener('DOMContentLoaded', () => {
-  const board = document.getElementById('board');
-
   // Create the board and initialize cells array
   for (let row = 0; row < 8; row++) {
     cells[row] = [];
@@ -108,13 +66,147 @@ function addInitialPieces(cells) {
 
 function createPiece(type) {
   const piece = document.createElement('div');
-  piece.className = 'piece';
+  piece.className = `piece ${type}`;
   piece.style.backgroundColor = type === PIECE_TYPES.DARK ? PLAYER_COLORS.DARK : PLAYER_COLORS.LIGHT;
   return piece;
 }
 
+/*----- functions -----*/
+function handleCellClick(event) {
+  const cell = event.target;
+  if (!selectedCell) {
+    if (cell.classList.contains('piece')) {
+      selectedCell = cell;
+      cell.classList.add('selected');
+    }
+  } else {
+    if (cell.classList.contains('selected')) {
+      cell.classList.remove('selected');
+      selectedCell = null;
+    } else {
+      movePiece(selectedCell, cell);
+      selectedCell.classList.remove('selected');
+      selectedCell = null;
+    }
+  }
+}
+
+function movePiece(fromCell, toCell) {
+  if (isValidMove(fromCell, toCell)) {
+    const fromPiece = fromCell.querySelector('.piece');
+    toCell.appendChild(fromPiece);
+
+    function shouldCrown(cell, type) {
+      const row = parseInt(cell.dataset.row);
+      return (type === PIECE_TYPES.DARK && row === 0) ||
+        (type === PIECE_TYPES.LIGHT && row === 7);
+    }
+    const fromType = fromPiece.classList.contains(PIECE_TYPES.DARK) ? PIECE_TYPES.DARK : PIECE_TYPES.LIGHT;
+    if (shouldCrown(toCell, fromType)) {
+      fromPiece.classList.add('king');
+    }
+
+    // Clear the fromCell
+    fromCell.innerHTML = '';
+    // Check if the moved piece should be crowned as a king
+    checkKingPiece(toCell);
+    // Check for game over condition and display modal
+    if (gameIsOver()) {
+      const winner = determineWinner(); // Implement this function to determine the winner
+      const message = winner ? `Player ${winner} wins!` : "It's a tie!";
+      displayGameOverModal(message);
+    }
+  }
+}
+
+function isValidMove(fromCell, toCell) {
+  const fromRow = parseInt(fromCell.dataset.row);
+  const fromCol = parseInt(fromCell.dataset.col);
+  const toRow = parseInt(toCell.dataset.row);
+  const toCol = parseInt(toCell.dataset.col);
+  // Check if the move is a diagonal move (one step)
+  const rowDiff = Math.abs(toRow - fromRow);
+  const colDiff = Math.abs(toCol - fromCol);
+  if (rowDiff === 1 && colDiff === 1) {
+    // Check if the destination cell is empty
+    if (!toCell.querySelector('.piece')) {
+      return true;
+    }
+  }
+  // Check if the move is a capturing move (two steps)
+  if (rowDiff === 2 && colDiff === 2) {
+    const opponentRow = (fromRow + toRow) / 2;
+    const opponentCol = (fromCol + toCol) / 2;
+    const opponentCell = cells[opponentRow][opponentCol];
+
+    if (
+      opponentCell &&
+      opponentCell.querySelector('.piece') &&
+      !toCell.querySelector('.piece') &&
+      !fromCell.querySelector('.piece').classList.contains('king')
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function checkKingPiece(cell) {
+  const piece = cell.querySelector('.piece');
+  if (piece) {
+    if (piece.classList.contains(PIECE_TYPES.DARK)) {
+      if (cell.dataset.row === '0') {
+        piece.classList.add('king');
+      }
+    } else if (piece.classList.contains(PIECE_TYPES.LIGHT)) {
+      if (cell.dataset.row === '7') {
+        piece.classList.add('king');
+      }
+    }
+  }
+}
+
+function gameIsOver() {
+  const darkPiecesRemaining = document.querySelectorAll('.piece.dark').length;
+  const lightPiecesRemaining = document.querySelectorAll('.piece.light').length;
+
+  if (darkPiecesRemaining === 0 || lightPiecesRemaining === 0) {
+    return true; // Game is over if one player has no pieces left
+  }
+
+  return false;
+}
+
+function determineWinner() {
+  const darkPiecesRemaining = document.querySelectorAll('.piece.dark').length;
+  const lightPiecesRemaining = document.querySelectorAll('.piece.light').length;
+
+  if (darkPiecesRemaining > lightPiecesRemaining) {
+    return 'DARK'; // Dark player wins
+  } else if (lightPiecesRemaining > darkPiecesRemaining) {
+    return 'LIGHT'; // Light player wins
+  } else {
+    return null; // It's a tie
+  }
+}
+
+// Function to display the game over modal
+function displayGameOverModal(message) {
+  modalMessage.textContent = message;
+  gameOverModal.style.display = 'block';
+
+  // Close modal when the 'x' button is clicked
+  closeModalButton.onclick = function () {
+    gameOverModal.style.display = 'none';
+  };
+}
+
+
+
+
+
 // Additional features...
-// Implement more advanced move validation logic as per the rules of checkers
 
 // Implement capturing and multi-jump logic if needed
 
