@@ -1,31 +1,32 @@
 /*----- constants -----*/
-const PLAYER_COLORS = {
-  DARK: '#000',
-  LIGHT: '#fff'
-};
-
-const PIECE_TYPES = {
-  DARK: 'dark',
-  LIGHT: 'light'
-};
-
-const cells = [];
-let selectedCell = null;
+const PLAYER_COLORS = { DARK: '#000', LIGHT: '#fff' };
+const PIECE_TYPES = { DARK: 'dark', LIGHT: 'light' };
 
 /*----- cached elements -----*/
 const board = document.getElementById('board');
 const gameOverModal = document.getElementById('gameOverModal');
 const modalMessage = document.getElementById('modalMessage');
 const closeModalButton = document.getElementById('closeModal');
+const restartButton = document.getElementById('restartButton');
 
 /*----- event listeners -----*/
-document.addEventListener('DOMContentLoaded', () => {
+restartButton.addEventListener('click', resetGame);
+document.addEventListener('DOMContentLoaded', initializeGame);
+
+// Initialize game state
+const cells = [];
+let selectedCell = null;
+let darkPlayerScore = 0;
+let lightPlayerScore = 0;
+
   // Create the board and initialize cells array
+function createBoard() {
   for (let row = 0; row < 8; row++) {
     cells[row] = [];
     for (let col = 0; col < 8; col++) {
       const cell = document.createElement('div');
-      cell.className = `cell ${row % 2 === col % 2 ? 'dark' : 'light'}`;
+      const cellClass = `cell ${row % 2 === col % 2 ? 'dark' : 'light'}`;
+      cell.className = cellClass;
       cell.dataset.row = row;
       cell.dataset.col = col;
       cell.addEventListener('click', handleCellClick);
@@ -33,12 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
       board.appendChild(cell);
     }
   }
+}
 
-  // Add initial pieces
-  addInitialPieces(cells);
-});
-
-function addInitialPieces(cells) {
+function addInitialPieces() {
   const darkPieces = [
     [0, 1], [0, 3], [0, 5], [0, 7],
     [1, 0], [1, 2], [1, 4], [1, 6],
@@ -51,18 +49,17 @@ function addInitialPieces(cells) {
     [7, 0], [7, 2], [7, 4], [7, 6]
   ];
 
-  darkPieces.forEach(coords => {
-    const [row, col] = coords;
-    const piece = createPiece(PIECE_TYPES.DARK);
-    cells[row][col].appendChild(piece);
-  });
-
-  lightPieces.forEach(coords => {
-    const [row, col] = coords;
-    const piece = createPiece(PIECE_TYPES.LIGHT);
-    cells[row][col].appendChild(piece);
-  });
+  const pieceMapping = { dark: darkPieces, light: lightPieces };
+  for (const type in pieceMapping) {
+    pieceMapping[type].forEach(coords => {
+      const [row, col] = coords;
+      const piece = createPiece(type);
+      cells[row][col].appendChild(piece);
+    });
+  }
 }
+
+/*----- functions -----*/
 
 function createPiece(type) {
   const piece = document.createElement('div');
@@ -71,24 +68,52 @@ function createPiece(type) {
   return piece;
 }
 
-/*----- functions -----*/
+function updateScores() {
+  document.getElementById('darkScore').textContent = `Dark Player Score: ${darkPlayerScore}`;
+  document.getElementById('lightScore').textContent = `Light Player Score: ${lightPlayerScore}`;
+}
+
+// Initialize the game when the DOM is loaded
+function initializeGame() {
+  createBoard();
+  addInitialPieces();
+}
+
+// Function to handle a cell click event
 function handleCellClick(event) {
   const cell = event.target;
   if (!selectedCell) {
     if (cell.classList.contains('piece')) {
-      selectedCell = cell;
-      cell.classList.add('selected');
+      selectCell(cell);
     }
   } else {
     if (cell.classList.contains('selected')) {
-      cell.classList.remove('selected');
-      selectedCell = null;
+      unselectCell(cell);
     } else {
       movePiece(selectedCell, cell);
-      selectedCell.classList.remove('selected');
-      selectedCell = null;
+      unselectCell(selectedCell);
+    }
+    if (selectedCell) {
+      unselectCell(selectedCell);
     }
   }
+}
+
+// Reset the game state
+function resetGame() {
+  clearHighlightedMoves();
+  unselectCell(selectedCell);
+  clearBoard();
+  initializeGame();
+  gameOverModal.style.display = 'none';
+}
+
+function clearBoard() {
+  cells.forEach(row => {
+    row.forEach(cell => {
+      cell.innerHTML = '';
+    });
+  });
 }
 
 function movePiece(fromCell, toCell) {
@@ -124,90 +149,141 @@ function isValidMove(fromCell, toCell) {
   const fromCol = parseInt(fromCell.dataset.col);
   const toRow = parseInt(toCell.dataset.row);
   const toCol = parseInt(toCell.dataset.col);
-  // Check if the move is a diagonal move (one step)
   const rowDiff = Math.abs(toRow - fromRow);
   const colDiff = Math.abs(toCol - fromCol);
-  if (rowDiff === 1 && colDiff === 1) {
-    // Check if the destination cell is empty
-    if (!toCell.querySelector('.piece')) {
-      return true;
+
+  if (rowDiff === 2 && colDiff === 2) {
+    const jumpedCell = cells[(fromRow + toRow) / 2][(fromCol + toCol) / 2];
+    const fromPiece = fromCell.querySelector('.piece');
+    const opponentPiece = jumpedCell.querySelector('.piece');
+    if (!toCell.querySelector('.piece') && opponentPiece && !fromPiece.classList.contains('king')) {
+      const nextCaptureMoves = findCaptureMoves(toCell, fromCell);
+      if (nextCaptureMoves.length > 0) {
+        highlightAvailableMoves(nextCaptureMoves);
+        return false;
+      } else {
+        return true;
+      }
     }
   }
-  // Check if the move is a capturing move (two steps)
-  if (rowDiff === 2 && colDiff === 2) {
-    const opponentRow = (fromRow + toRow) / 2;
-    const opponentCol = (fromCol + toCol) / 2;
-    const opponentCell = cells[opponentRow][opponentCol];
+  return false;
+}
+
+function findCaptureMoves(currentCell, lastCapturedCell) {
+  const capturingMoves = [];
+  const currentPlayer = currentCell.querySelector('.piece').classList.contains(PIECE_TYPES.DARK) ? PIECE_TYPES.DARK : PIECE_TYPES.LIGHT;
+  const opponentPlayer = currentPlayer === PIECE_TYPES.DARK ? PIECE_TYPES.LIGHT : PIECE_TYPES.DARK;
+
+  const directions = [
+    { row: -2, col: -2 }, // Up-left jump
+    { row: -2, col: 2 },  // Up-right jump
+    { row: 2, col: -2 },  // Down-left jump
+    { row: 2, col: 2 }    // Down-right jump
+  ];
+
+  for (const direction of directions) {
+    const jumpedRow = parseInt(currentCell.dataset.row) - direction.row;
+    const jumpedCol = parseInt(currentCell.dataset.col) - direction.col;
+    const capturedRow = (parseInt(currentCell.dataset.row) + jumpedRow) / 2;
+    const capturedCol = (parseInt(currentCell.dataset.col) + jumpedCol) / 2;
+    const landedRow = jumpedRow - direction.row;
+    const landedCol = jumpedCol - direction.col;
 
     if (
-      opponentCell &&
-      opponentCell.querySelector('.piece') &&
-      !toCell.querySelector('.piece') &&
-      !fromCell.querySelector('.piece').classList.contains('king')
+      isValidCell({ row: jumpedRow, col: jumpedCol }) &&
+      isValidCell({ row: capturedRow, col: capturedCol }) &&
+      isOpponentPiece({ row: capturedRow, col: capturedCol }, board) &&
+      !isEqualCell({ row: capturedRow, col: capturedCol }, lastCapturedCell)
     ) {
-      return true;
+      capturingMoves.push({
+        from: cells[landedRow][landedCol],
+        to: cells[jumpedRow][jumpedCol],
+        captured: cells[capturedRow][capturedCol]
+      });
     }
   }
 
-  return false;
+  return capturingMoves;
 }
 
-function checkKingPiece(cell) {
-  const piece = cell.querySelector('.piece');
-  if (piece) {
-    if (piece.classList.contains(PIECE_TYPES.DARK)) {
-      if (cell.dataset.row === '0') {
-        piece.classList.add('king');
-      }
-    } else if (piece.classList.contains(PIECE_TYPES.LIGHT)) {
-      if (cell.dataset.row === '7') {
-        piece.classList.add('king');
+  function highlightAvailableMoves(moves) {
+    for (const move of moves) {
+      const { to } = move;
+      const toCell = cells[to.row][to.col];
+      toCell.classList.add('available-move');
+      toCell.addEventListener('click', handleHighlightedCellClick);
+    }
+  }
+
+  function handleHighlightedCellClick(event) {
+    const cell = event.target;
+    const selectedFromCell = selectedCell;
+    const selectedToCell = cell;
+    movePiece(selectedFromCell, selectedToCell);
+    selectedFromCell.classList.remove('selected');
+    selectedCell = null;
+    clearHighlightedMoves();
+  }
+
+  function clearHighlightedMoves() {
+    const availableMoveCells = document.querySelectorAll('.available-move');
+    for (const cell of availableMoveCells) {
+      cell.classList.remove('available-move');
+      cell.removeEventListener('click', handleHighlightedCellClick);
+    }
+  }
+
+  function checkKingPiece(cell) {
+    const piece = cell.querySelector('.piece');
+    if (piece) {
+      if (piece.classList.contains(PIECE_TYPES.DARK)) {
+        if (cell.dataset.row === '0') {
+          piece.classList.add('king');
+        }
+      } else if (piece.classList.contains(PIECE_TYPES.LIGHT)) {
+        if (cell.dataset.row === '7') {
+          piece.classList.add('king');
+        }
       }
     }
   }
-}
 
-function gameIsOver() {
-  const darkPiecesRemaining = document.querySelectorAll('.piece.dark').length;
-  const lightPiecesRemaining = document.querySelectorAll('.piece.light').length;
-
-  if (darkPiecesRemaining === 0 || lightPiecesRemaining === 0) {
-    return true; // Game is over if one player has no pieces left
+function crownPiece(playerType) {
+  if (playerType === PIECE_TYPES.DARK) {
+    darkPlayerScore++;
+  } else if (playerType === PIECE_TYPES.LIGHT) {
+    lightPlayerScore++;
   }
-
-  return false;
 }
+
+  function gameIsOver() {
+    const darkPiecesRemaining = document.querySelectorAll('.piece.dark').length;
+    const lightPiecesRemaining = document.querySelectorAll('.piece.light').length;
+
+    if (darkPiecesRemaining === 0 || lightPiecesRemaining === 0) {
+      return true; // Game is over if one player has no pieces left
+    }
+
+    return false;
+  }
 
 function determineWinner() {
-  const darkPiecesRemaining = document.querySelectorAll('.piece.dark').length;
-  const lightPiecesRemaining = document.querySelectorAll('.piece.light').length;
-
-  if (darkPiecesRemaining > lightPiecesRemaining) {
+  if (darkPlayerScore > lightPlayerScore) {
     return 'DARK'; // Dark player wins
-  } else if (lightPiecesRemaining > darkPiecesRemaining) {
+  } else if (lightPlayerScore > darkPlayerScore) {
     return 'LIGHT'; // Light player wins
   } else {
     return null; // It's a tie
   }
 }
 
-// Function to display the game over modal
-function displayGameOverModal(message) {
-  modalMessage.textContent = message;
-  gameOverModal.style.display = 'block';
+  // Function to display the game over modal
+  function displayGameOverModal(message) {
+    modalMessage.textContent = message;
+    gameOverModal.style.display = 'block';
 
-  // Close modal when the 'x' button is clicked
-  closeModalButton.onclick = function () {
-    gameOverModal.style.display = 'none';
-  };
-}
-
-
-
-
-
-// Additional features...
-
-// Implement capturing and multi-jump logic if needed
-
-// Add event listeners for additional game features
+    // Close modal when the 'x' button is clicked
+    closeModalButton.onclick = function () {
+      gameOverModal.style.display = 'none';
+    };
+  }

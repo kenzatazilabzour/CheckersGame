@@ -26,6 +26,7 @@
 
 .light {
   background-color: #ccc;
+  color: black;
 }
 
 .flex-ctr {
@@ -38,7 +39,7 @@
   border: 2px solid gold;
 }
 
-.modal {
+.message {
   display: none;
   position: fixed;
   z-index: 1;
@@ -46,21 +47,21 @@
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(216, 23, 23, 0.6);
   overflow: auto;
 }
 
-.modal-content {
-  background-color: #fefefe;
+.message-content {
+  background-color: #c29c8f;
   margin: 15% auto;
   padding: 20px;
-  border: 1px solid #888;
+  border: 1px solid rgb(239, 230, 230);
   width: 60%;
   text-align: center;
 }
 
 .close {
-  color: #aaa;
+  color: rgb(103, 5, 5);
   float: right;
   font-size: 28px;
   font-weight: bold;
@@ -68,7 +69,84 @@
 
 .close:hover,
 .close:focus {
-  color: black;
+  color: rgb(170, 95, 95);
   text-decoration: none;
   cursor: pointer;
+}
+
+#gameOverModal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  color: #fff;
+}
+
+#modalMessage {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+#closeModal {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #fff;
+  cursor: pointer;
+}
+
+#restartButton {
+  background-color: #4CAF50;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#restartButton:hover {
+  background-color: #45a049;
+}
+
+
+.piece {
+  width: 50px;
+  height: 50px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: transform 0.3s ease-in-out;
+}
+
+.piece.dark {
+  background-image: url('dark-piece.png');
+  /* Add  image URL */
+}
+
+.piece.light {
+  background-image: url('light-piece.png');
+  /* Add image URL */
+}
+
+.piece.selected {
+  transform: scale(1.1);
+}
+
+.cell.dark {
+  background-color: #8B4513;
+
+  background-image: url('dark-cell-background.jpg');
+  /* Add  image URL */
+}
+
+.cell.light {
+  background-color: #CD853F;
+
+  background-image: url('light-cell-background.jpg');
+  /* Add  image URL */
 }
