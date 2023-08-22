@@ -11,14 +11,35 @@
 </head>
 <body>
   <h1 class="flex-ctr">Checkers Game</h1>
-<div id="board" class="board"></div>
-<div id="darkScore">Dark Player Score: 0</div>
-<div id="lightScore">Light Player Score: 0</div>
-<button id="restartButton" class="restartButton">Restart Game</button>
-<div id="gameOverModal" class="modal">
+<div class="container">
+  <div class="next-player counter">
+    <div class="occupied whitePiece" id="next-player"></div>
+    Player
+  </div>
+  <div class="game" id="game"></div>
+  <div class="counter">
+    <div>
+      <div class="occupied whitePiece"></div>
+      <span id="white-player-count-pieces">10</span>
+    </div>
+    <div>
+      <div class="occupied blackPiece"></div>
+      <span id="black-player-count-pieces">10</span>
+    </div>
+  </div>
+</div>
+
+<div id="easyModal" class="modal">
   <div class="modal-content">
-    <span class="close" id="closeModal">&times;</span>
-    <p id="modalMessage"></p>
+    <div class="modal-body">
+      <p>The <strong id="winner"></strong> player won the game !!</p>
+      <p> <span id="loser"></span>, whould you take your revenge ???</p>
+
+      <div class="btn-container">
+        <button class="btn" onclick="location.reload()">Yes </button>
+        <button class="btn" onclick="modalClose()">No</button>
+      </div>
+    </div>
   </div>
 </div>
 </body>

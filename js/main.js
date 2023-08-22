@@ -1,289 +1,279 @@
-/*----- constants -----*/
-const PLAYER_COLORS = { DARK: '#000', LIGHT: '#fff' };
-const PIECE_TYPES = { DARK: 'dark', LIGHT: 'light' };
+class Piece {
+  constructor(row, column) {
+    this.row = row;
+    this.column = column;
+  }
 
-/*----- cached elements -----*/
-const board = document.getElementById('board');
-const gameOverModal = document.getElementById('gameOverModal');
-const modalMessage = document.getElementById('modalMessage');
-const closeModalButton = document.getElementById('closeModal');
-const restartButton = document.getElementById('restartButton');
-
-/*----- event listeners -----*/
-restartButton.addEventListener('click', resetGame);
-document.addEventListener('DOMContentLoaded', initializeGame);
-
-// Initialize game state
-const cells = [];
-let selectedCell = null;
-let darkPlayerScore = 0;
-let lightPlayerScore = 0;
-
-  // Create the board and initialize cells array
-function createBoard() {
-  for (let row = 0; row < 8; row++) {
-    cells[row] = [];
-    for (let col = 0; col < 8; col++) {
-      const cell = document.createElement('div');
-      const cellClass = `cell ${row % 2 === col % 2 ? 'dark' : 'light'}`;
-      cell.className = cellClass;
-      cell.dataset.row = row;
-      cell.dataset.col = col;
-      cell.addEventListener('click', handleCellClick);
-      cells[row][col] = cell;
-      board.appendChild(cell);
-    }
+  compare(piece) {
+    return piece.row === this.row && piece.column === this.column;
   }
 }
+const modal = document.getElementById("easyModal");
+let game = document.getElementById("game");
+let currentPlayer = 1;
+let posNewPosition = [];
+let capturedPosition = [];
+let board = [
+  [0, -1, 0, -1, 0, -1, 0, -1, 0, -1],
+  [-1, 0, -1, 0, -1, 0, -1, 0, -1, 0],
+  [0, -1, 0, -1, 0, -1, 0, -1, 0, -1],
+  [-1, 0, -1, 0, -1, 0, -1, 0, -1, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+  [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+];
 
-function addInitialPieces() {
-  const darkPieces = [
-    [0, 1], [0, 3], [0, 5], [0, 7],
-    [1, 0], [1, 2], [1, 4], [1, 6],
-    [2, 1], [2, 3], [2, 5], [2, 7]
-  ];
+buildBoard();
 
-  const lightPieces = [
-    [5, 0], [5, 2], [5, 4], [5, 6],
-    [6, 1], [6, 3], [6, 5], [6, 7],
-    [7, 0], [7, 2], [7, 4], [7, 6]
-  ];
+function buildBoard() {
+  game.innerHTML = "";
+  let black = 0;
+  let white = 0;
+  for (let i = 0; i < board.length; i++) {
+    const element = board[i];
+    let row = document.createElement("div"); // create div for each row
+    row.setAttribute("class", "row");
 
-  const pieceMapping = { dark: darkPieces, light: lightPieces };
-  for (const type in pieceMapping) {
-    pieceMapping[type].forEach(coords => {
-      const [row, col] = coords;
-      const piece = createPiece(type);
-      cells[row][col].appendChild(piece);
-    });
-  }
-}
+    for (let j = 0; j < element.length; j++) {
+      const elmt = element[j];
+      let col = document.createElement("div"); // create div for each case
+      let piece = document.createElement("div");
+      let caseType = "";
+      let occupied = "";
 
-/*----- functions -----*/
-
-function createPiece(type) {
-  const piece = document.createElement('div');
-  piece.className = `piece ${type}`;
-  piece.style.backgroundColor = type === PIECE_TYPES.DARK ? PLAYER_COLORS.DARK : PLAYER_COLORS.LIGHT;
-  return piece;
-}
-
-function updateScores() {
-  document.getElementById('darkScore').textContent = `Dark Player Score: ${darkPlayerScore}`;
-  document.getElementById('lightScore').textContent = `Light Player Score: ${lightPlayerScore}`;
-}
-
-// Initialize the game when the DOM is loaded
-function initializeGame() {
-  createBoard();
-  addInitialPieces();
-}
-
-// Function to handle a cell click event
-function handleCellClick(event) {
-  const cell = event.target;
-  if (!selectedCell) {
-    if (cell.classList.contains('piece')) {
-      selectCell(cell);
-    }
-  } else {
-    if (cell.classList.contains('selected')) {
-      unselectCell(cell);
-    } else {
-      movePiece(selectedCell, cell);
-      unselectCell(selectedCell);
-    }
-    if (selectedCell) {
-      unselectCell(selectedCell);
-    }
-  }
-}
-
-// Reset the game state
-function resetGame() {
-  clearHighlightedMoves();
-  unselectCell(selectedCell);
-  clearBoard();
-  initializeGame();
-  gameOverModal.style.display = 'none';
-}
-
-function clearBoard() {
-  cells.forEach(row => {
-    row.forEach(cell => {
-      cell.innerHTML = '';
-    });
-  });
-}
-
-function movePiece(fromCell, toCell) {
-  if (isValidMove(fromCell, toCell)) {
-    const fromPiece = fromCell.querySelector('.piece');
-    toCell.appendChild(fromPiece);
-
-    function shouldCrown(cell, type) {
-      const row = parseInt(cell.dataset.row);
-      return (type === PIECE_TYPES.DARK && row === 0) ||
-        (type === PIECE_TYPES.LIGHT && row === 7);
-    }
-    const fromType = fromPiece.classList.contains(PIECE_TYPES.DARK) ? PIECE_TYPES.DARK : PIECE_TYPES.LIGHT;
-    if (shouldCrown(toCell, fromType)) {
-      fromPiece.classList.add('king');
-    }
-
-    // Clear the fromCell
-    fromCell.innerHTML = '';
-    // Check if the moved piece should be crowned as a king
-    checkKingPiece(toCell);
-    // Check for game over condition and display modal
-    if (gameIsOver()) {
-      const winner = determineWinner(); // Implement this function to determine the winner
-      const message = winner ? `Player ${winner} wins!` : "It's a tie!";
-      displayGameOverModal(message);
-    }
-  }
-}
-
-function isValidMove(fromCell, toCell) {
-  const fromRow = parseInt(fromCell.dataset.row);
-  const fromCol = parseInt(fromCell.dataset.col);
-  const toRow = parseInt(toCell.dataset.row);
-  const toCol = parseInt(toCell.dataset.col);
-  const rowDiff = Math.abs(toRow - fromRow);
-  const colDiff = Math.abs(toCol - fromCol);
-
-  if (rowDiff === 2 && colDiff === 2) {
-    const jumpedCell = cells[(fromRow + toRow) / 2][(fromCol + toCol) / 2];
-    const fromPiece = fromCell.querySelector('.piece');
-    const opponentPiece = jumpedCell.querySelector('.piece');
-    if (!toCell.querySelector('.piece') && opponentPiece && !fromPiece.classList.contains('king')) {
-      const nextCaptureMoves = findCaptureMoves(toCell, fromCell);
-      if (nextCaptureMoves.length > 0) {
-        highlightAvailableMoves(nextCaptureMoves);
-        return false;
+      if (i % 2 === 0) {
+        if (j % 2 === 0) {
+          caseType = "Whitecase";
+        } else {
+          caseType = "blackCase";
+        }
       } else {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-function findCaptureMoves(currentCell, lastCapturedCell) {
-  const capturingMoves = [];
-  const currentPlayer = currentCell.querySelector('.piece').classList.contains(PIECE_TYPES.DARK) ? PIECE_TYPES.DARK : PIECE_TYPES.LIGHT;
-  const opponentPlayer = currentPlayer === PIECE_TYPES.DARK ? PIECE_TYPES.LIGHT : PIECE_TYPES.DARK;
-
-  const directions = [
-    { row: -2, col: -2 }, // Up-left jump
-    { row: -2, col: 2 },  // Up-right jump
-    { row: 2, col: -2 },  // Down-left jump
-    { row: 2, col: 2 }    // Down-right jump
-  ];
-
-  for (const direction of directions) {
-    const jumpedRow = parseInt(currentCell.dataset.row) - direction.row;
-    const jumpedCol = parseInt(currentCell.dataset.col) - direction.col;
-    const capturedRow = (parseInt(currentCell.dataset.row) + jumpedRow) / 2;
-    const capturedCol = (parseInt(currentCell.dataset.col) + jumpedCol) / 2;
-    const landedRow = jumpedRow - direction.row;
-    const landedCol = jumpedCol - direction.col;
-
-    if (
-      isValidCell({ row: jumpedRow, col: jumpedCol }) &&
-      isValidCell({ row: capturedRow, col: capturedCol }) &&
-      isOpponentPiece({ row: capturedRow, col: capturedCol }, board) &&
-      !isEqualCell({ row: capturedRow, col: capturedCol }, lastCapturedCell)
-    ) {
-      capturingMoves.push({
-        from: cells[landedRow][landedCol],
-        to: cells[jumpedRow][jumpedCol],
-        captured: cells[capturedRow][capturedCol]
-      });
-    }
-  }
-
-  return capturingMoves;
-}
-
-  function highlightAvailableMoves(moves) {
-    for (const move of moves) {
-      const { to } = move;
-      const toCell = cells[to.row][to.col];
-      toCell.classList.add('available-move');
-      toCell.addEventListener('click', handleHighlightedCellClick);
-    }
-  }
-
-  function handleHighlightedCellClick(event) {
-    const cell = event.target;
-    const selectedFromCell = selectedCell;
-    const selectedToCell = cell;
-    movePiece(selectedFromCell, selectedToCell);
-    selectedFromCell.classList.remove('selected');
-    selectedCell = null;
-    clearHighlightedMoves();
-  }
-
-  function clearHighlightedMoves() {
-    const availableMoveCells = document.querySelectorAll('.available-move');
-    for (const cell of availableMoveCells) {
-      cell.classList.remove('available-move');
-      cell.removeEventListener('click', handleHighlightedCellClick);
-    }
-  }
-
-  function checkKingPiece(cell) {
-    const piece = cell.querySelector('.piece');
-    if (piece) {
-      if (piece.classList.contains(PIECE_TYPES.DARK)) {
-        if (cell.dataset.row === '0') {
-          piece.classList.add('king');
-        }
-      } else if (piece.classList.contains(PIECE_TYPES.LIGHT)) {
-        if (cell.dataset.row === '7') {
-          piece.classList.add('king');
+        if (j % 2 !== 0) {
+          caseType = "Whitecase";
+        } else {
+          caseType = "blackCase";
         }
       }
+
+      // add the piece if the case isn't empty
+      if (board[i][j] === 1) {
+        occupied = "whitePiece";
+      } else if (board[i][j] === -1) {
+        occupied = "blackPiece";
+      } else {
+        occupied = "empty";
+      }
+
+      piece.setAttribute("class", "occupied " + occupied);
+
+      // set row and colum in the case
+      piece.setAttribute("row", i);
+      piece.setAttribute("column", j);
+      piece.setAttribute("data-position", i + "-" + j);
+
+      //add event listener to each piece
+      piece.addEventListener("click", movePiece);
+
+      col.appendChild(piece);
+
+      col.setAttribute("class", "column " + caseType);
+      row.appendChild(col);
+
+      // counter number of each piece
+      if (board[i][j] === -1) {
+        black++;
+      } else if (board[i][j] === 1) {
+        white++;
+      }
+
+      //display the number of piece for each player
+      displayCounter(black, white);
     }
+
+    game.appendChild(row);
   }
 
-function crownPiece(playerType) {
-  if (playerType === PIECE_TYPES.DARK) {
-    darkPlayerScore++;
-  } else if (playerType === PIECE_TYPES.LIGHT) {
-    lightPlayerScore++;
+  if (black === 0 || white === 0) {
+    modalOpen(black);
   }
 }
 
-  function gameIsOver() {
-    const darkPiecesRemaining = document.querySelectorAll('.piece.dark').length;
-    const lightPiecesRemaining = document.querySelectorAll('.piece.light').length;
+function movePiece(e) {
+  let piece = e.target;
+  const row = parseInt(piece.getAttribute("row"));
+  const column = parseInt(piece.getAttribute("column"));
+  let p = new Piece(row, column);
 
-    if (darkPiecesRemaining === 0 || lightPiecesRemaining === 0) {
-      return true; // Game is over if one player has no pieces left
-    }
-
-    return false;
-  }
-
-function determineWinner() {
-  if (darkPlayerScore > lightPlayerScore) {
-    return 'DARK'; // Dark player wins
-  } else if (lightPlayerScore > darkPlayerScore) {
-    return 'LIGHT'; // Light player wins
+  if (capturedPosition.length > 0) {
+    enableToCapture(p);
   } else {
-    return null; // It's a tie
+    if (posNewPosition.length > 0) {
+      enableToMove(p);
+    }
+  }
+
+  if (currentPlayer === board[row][column]) {
+    player = reverse(currentPlayer);
+    if (!findPieceCaptured(p, player)) {
+      findPossibleNewPosition(p, player);
+    }
   }
 }
 
-  // Function to display the game over modal
-  function displayGameOverModal(message) {
-    modalMessage.textContent = message;
-    gameOverModal.style.display = 'block';
+function enableToCapture(p) {
+  let find = false;
+  let pos = null;
+  capturedPosition.forEach((element) => {
+    if (element.newPosition.compare(p)) {
+      find = true;
+      pos = element.newPosition;
+      old = element.pieceCaptured;
+      return;
+    }
+  });
 
-    // Close modal when the 'x' button is clicked
-    closeModalButton.onclick = function () {
-      gameOverModal.style.display = 'none';
-    };
+    if (find) {
+    board[pos.row][pos.column] = currentPlayer;
+
+    if (readyToMove !== null) {
+      board[readyToMove.row][readyToMove.column] = 0;
+    }
+
+    if (old !== null) {
+      board[old.row][old.column] = 0;
+    }
+
+    readyToMove = null;
+    capturedPosition = [];
+    posNewPosition = [];
+    displayCurrentPlayer();
+    buildBoard();
+    // check if there are possibilities to capture other pieces
+    currentPlayer = reverse(currentPlayer);
+  } else {
+    buildBoard();
   }
+}
+
+function enableToMove(p) {
+  let find = false;
+  let newPosition = null;
+  // check if the case where the player play the selected piece can move on
+  posNewPosition.forEach((element) => {
+    if (element.compare(p)) {
+      find = true;
+      newPosition = element;
+      return;
+    }
+  });
+
+  if (find) moveThePiece(newPosition);
+  else buildBoard();
+}
+
+function moveThePiece(newPosition) {
+  // if the current piece can move on, edit the board and rebuild
+  board[newPosition.row][newPosition.column] = currentPlayer;
+  board[readyToMove.row][readyToMove.column] = 0;
+
+  // init value
+  readyToMove = null;
+  posNewPosition = [];
+  capturedPosition = [];
+
+  currentPlayer = reverse(currentPlayer);
+
+  displayCurrentPlayer();
+  buildBoard();
+}
+
+function findPossibleNewPosition(piece, player) {
+  if (board[piece.row + player][piece.column + 1] === 0) {
+    readyToMove = piece;
+    markPossiblePosition(piece, player, 1);
+  }
+
+  if (board[piece.row + player][piece.column - 1] === 0) {
+    readyToMove = piece;
+    markPossiblePosition(piece, player, -1);
+  }
+}
+
+function markPossiblePosition(p, player = 0, direction = 0) {
+  attribute = parseInt(p.row + player) + "-" + parseInt(p.column + direction);
+
+  position = document.querySelector("[data-position='" + attribute + "']");
+  if (position) {
+    position.style.background = "green";
+    // // save where it can move
+    posNewPosition.push(new Piece(p.row + player, p.column + direction));
+  }
+}
+
+function displayCurrentPlayer() {
+  var container = document.getElementById("next-player");
+  if (container.classList.contains("whitePiece")) {
+    container.setAttribute("class", "occupied blackPiece");
+  } else {
+    container.setAttribute("class", "occupied whitePiece");
+  }
+}
+
+function findPieceCaptured(p, player) {
+  let found = false;
+  if (p.row >= 2 && p.column >= 2) {
+    if (
+      board[p.row - 1][p.column - 1] === player &&
+      board[p.row - 2][p.column - 2] === 0
+    ) {
+      found = true;
+    }
+    if (
+      p.column + 2 < board[p.row - 1].length &&
+      board[p.row - 1][p.column + 1] === player &&
+      board[p.row - 2][p.column + 2] === 0
+    ) {
+      found = true;
+    }
+    if (
+      p.row + 2 < board.length &&
+      board[p.row + 1][p.column - 1] === player &&
+      board[p.row + 2][p.column - 2] === 0
+    ) {
+      found = true;
+    }
+    if (
+      p.row + 2 < board.length &&
+      p.column + 2 < board[p.row + 1].length &&
+      board[p.row + 1][p.column + 1] === player &&
+      board[p.row + 2][p.column + 2] === 0
+    ) {
+      found = true;
+    }
+  }
+  return found;
+}
+
+function displayCounter(black, white) {
+  var blackContainer = document.getElementById("black-player-count-pieces");
+  var whiteContainer = document.getElementById("white-player-count-pieces");
+  blackContainer.innerHTML = black;
+  whiteContainer.innerHTML = white;
+}
+
+function modalOpen(black) {
+  document.getElementById("winner").innerHTML = black === 0 ? "White" : "Black";
+  document.getElementById("loser").innerHTML = black !== 0 ? "White" : "Black";
+  modal.classList.add("effect");
+}
+
+function modalClose() {
+  modal.classList.remove("effect");
+}
+
+function reverse(player) {
+  return player === -1 ? 1 : -1;
+}
