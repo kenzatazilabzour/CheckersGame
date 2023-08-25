@@ -1,15 +1,27 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
+  font-family: sans-serif Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
   position: relative;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.6;
-  color: #fff;
- background-image: url(../img/background.png);
-  background-size:contain;
+  color: lightcoral;
+  background-image: url(../img/background.jpg);
+  background-size: cover;
+  background-position: center left 1000%;
   width: 100vw;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-left: 20px;
+}
+
+h1 {
+  font-size: 80px;
+  margin-top: 50px;
+
 }
 
 .container {
@@ -17,7 +29,7 @@ body {
   width: 100%;
   height: 100%;
   padding: 0;
-  margin-top: 500px;
+  margin-top: 40px;
   margin-left: 10px;
   display: flex;
   align-items: center;
@@ -29,9 +41,9 @@ body {
 .counter {
   display: flex;
   gap: 20px;
-  background-color: #ecc59a;
+  background-color: grey;
   padding: 10px 20px;
-  border: 1px solid #ecc59a;
+  border: 1px solid grey;
   border-radius: 5px;
 }
 
@@ -62,9 +74,8 @@ body {
   background-color: black;
 }
 
-
 .game {
-  background-color: #4c382e;
+  background-color: black;
   width: 500px;
   height: 500px;
   display: flex;
@@ -96,19 +107,19 @@ body {
 }
 
 .game .row .column .occupied.whitePiece {
-  background-color: white;
+  background-color: lightgray;
 }
 
 .game .row .column.whiteCase {
-  background-color: #4c382e;
+  background-color: lightgray;
 }
 
 .game .row .column.blackCase {
-  background-color: #ecc59a;
+  background-color: grey;
 }
 
 .readyToMove {
-  background-color: yellowgreen;
+  background-color: lightcoral;
 }
 
 /* modal style */
@@ -132,7 +143,7 @@ button {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: lightgray (0, 0, 0, 0.8);
 
   visibility: hidden;
   opacity: 0;
@@ -150,7 +161,7 @@ button {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  background-color: #ecc59a;
+  background-color: black;
   border-radius: 20px;
 }
 
@@ -184,7 +195,7 @@ button {
   left: 0;
   right: 0;
   height: 4px;
-  background: #ecc59a;
+  background: lightgray;
   border-radius: 4px;
 }
 
@@ -205,9 +216,9 @@ button {
 }
 
 .modal .btn {
-  background-color: #4c382e;
-  color: white;
+  background-color: grey;
+  color: black;
   padding: 10px 40px;
-  border: 1px solid #4c382e;
+  border: 1px solid grey;
   border-radius: 5px;
 }
