@@ -88,25 +88,20 @@ function buildBoard() {
       } else {
         occupied = "empty";
       }
-
       piece.setAttribute("class", "occupied " + occupied);
-
       // set row and colum in the case
       piece.setAttribute("row", i);
       piece.setAttribute("column", j);
       piece.setAttribute("data-position", i + "-" + j);
       col.appendChild(piece);
-
       col.setAttribute("class", "column " + caseType);
       row.appendChild(col);
-
       // counter number of each piece
       if (board[i][j] === -1) {
         black++;
       } else if (board[i][j] === 1) {
         white++;
       }
-
       //display the number of piece for each player
       displayCounter(black, white);
     }
@@ -120,8 +115,6 @@ function movePiece(e) {
   const row = parseInt(piece.getAttribute("row"));
   const column = parseInt(piece.getAttribute("column"));
   let p = new Piece(row, column);
-  console.log("Clicked piece row:", row);
-  console.log("Clicked piece column:", column);
   if (capturedPosition.length > 0) {
     enableToCapture(p);
   } else {
@@ -193,16 +186,6 @@ function enableToMove(p) {
 function moveThePiece(newPosition) {
   board[newPosition.row][newPosition.column] = currentPlayer;
   board[readyToMove.row][readyToMove.column] = 0;
-
-  // init value
-  readyToMove = null;
-  posNewPosition = [];
-  capturedPosition = [];
-
-  currentPlayer = reverse(currentPlayer);
-
-  displayCurrentPlayer();
-  buildBoard();
 }
 
 function findPossibleNewPosition(piece, player) {
@@ -292,13 +275,6 @@ function checkForWin() {
   }
 }
 
-function displayCounter(black, white) {
-  const blackContainer = document.getElementById("black-player-count-pieces");
-  const whiteContainer = document.getElementById("white-player-count-pieces");
-  blackContainer.innerHTML = black;
-  whiteContainer.innerHTML = white;
-}
-
 function modalClose() {
   modal.classList.remove("effect");
 }
@@ -306,6 +282,3 @@ function modalClose() {
 function reverse(player) {
   return player === BLACK_PLAYER ? WHITE_PLAYER : BLACK_PLAYER;
 }
-
-/* Initialize the game */
-buildBoard();
