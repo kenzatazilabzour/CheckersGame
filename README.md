@@ -46,9 +46,11 @@ This is a web-based implementation of the classic game of Checkers. The game is 
 - If a capture move is available, you must take it.
 - The game will automatically detect a win and display a modal.
 
+[Click to Play!](https://kenzatazilabzour.github.io/checkersGame/)
+
 ## Screenshots
 
-![Gameplay](screenshots/gameplay.png)
+![Gameplay](../img/game.png)
 _The Checkers game in action._
 
 ## Technologies Used
