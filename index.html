@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,38 +9,41 @@
   <link rel="stylesheet" href="css/main.css">
   <title>Checkers Game</title>
 </head>
+
 <body>
-  <h1 class="flex-ctr">Checkers Game</h1>
-<div class="container">
-  <div class="next-player counter">
-    <div class="occupied whitePiece" id="next-player"></div>
-    Player
-  </div>
-  <div class="game" id="game"></div>
-  <div class="counter">
-    <div>
-      <div class="occupied whitePiece"></div>
-      <span id="white-player-count-pieces">10</span>
+  <h1>Checkers Game</h1>
+  <div class="container">
+    <div class="next-player counter">
+      <div class="occupied whitePiece" id="next-player"></div>
+      Player's Turn
     </div>
-    <div>
-      <div class="occupied blackPiece"></div>
-      <span id="black-player-count-pieces">10</span>
+    <div class="game" id="game">
+
     </div>
-  </div>
-</div>
-
-<div id="easyModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-body">
-      <p>The <strong id="winner"></strong> player won the game !!</p>
-      <p> <span id="loser"></span>, whould you take your revenge ???</p>
-
-      <div class="btn-container">
-        <button class="btn" onclick="location.reload()">Yes </button>
-        <button class="btn" onclick="modalClose()">No</button>
+    <div class="counter">
+      <div>
+        <div class="occupied whitePiece"></div>
+        <span id="white-player-count-pieces">10</span>
+      </div>
+      <div>
+        <div class="occupied blackPiece"></div>
+        <span id="black-player-count-pieces">10</span>
       </div>
     </div>
   </div>
-</div>
+
+  <div id="easyModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-body">
+        <p>The <strong id="winner"></strong> player won the game !!</p>
+        <p> <span id="loser"></span>, would you like to play again?</p>
+        <div class="btn-container">
+          <button class="btn" onclick="location.reload()">Yes</button>
+          <button class="btn" onclick="modalClose()">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
+
 </html>

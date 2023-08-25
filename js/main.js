@@ -6,6 +6,7 @@ const WHITE_PLAYER = 1;
 let currentPlayer = 1;
 let posNewPosition = [];
 let capturedPosition = [];
+let coordinates;
 
 /*----- cached elements -----*/
 const modal = document.getElementById("easyModal");
@@ -88,20 +89,25 @@ function buildBoard() {
       } else {
         occupied = "empty";
       }
+
       piece.setAttribute("class", "occupied " + occupied);
+
       // set row and colum in the case
       piece.setAttribute("row", i);
       piece.setAttribute("column", j);
       piece.setAttribute("data-position", i + "-" + j);
       col.appendChild(piece);
+
       col.setAttribute("class", "column " + caseType);
       row.appendChild(col);
+
       // counter number of each piece
       if (board[i][j] === -1) {
         black++;
       } else if (board[i][j] === 1) {
         white++;
       }
+
       //display the number of piece for each player
       displayCounter(black, white);
     }
@@ -112,64 +118,68 @@ function buildBoard() {
 
 function movePiece(e) {
   let piece = e.target;
+
   const row = parseInt(piece.getAttribute("row"));
   const column = parseInt(piece.getAttribute("column"));
   let p = new Piece(row, column);
+  console.log("Clicked piece row:", row);
+  console.log("Clicked piece column:", column);
   if (capturedPosition.length > 0) {
-    enableToCapture(p);
+    console.log('these are the coordinates', coordinates)
+    console.log(p)
+    enableToCapture(p, coordinates);
   } else {
     if (posNewPosition.length > 0) {
+      console.log('hello')
       enableToMove(p);
     }
   }
 
   if (currentPlayer === board[row][column]) {
     player = reverse(currentPlayer);
-    if (!findPieceCaptured(p, player)) {
+    let captured = findPieceCaptured(p, player)
+    console.log(captured)
+    if (captured.length === 0) {
+      console.log('no captured')
       findPossibleNewPosition(p, player);
+    } else if (captured.length > 0) {
+      coordinates = findPieceCaptured(p, player);
+      console.log(coordinates)
+      // enableToCapture(coordinates)
+      findPossibleNewPosition(p, player)
+      findCapturedPossibleMove(p, player, coordinates)
     }
   }
 }
 
-function enableToCapture(p) {
-  let find = false;
-  let pos = null;
-  let old = null;
+function enableToCapture(p, coordinates) {
+  let old = coordinates.find(c => c.capturedColumn === p.column + 1 || c.capturedColumn === p.column - 1)
+  console.log(old)
+  console.log('ppppp', p)
+  console.log(capturedPosition)
 
-  capturedPosition.forEach((element) => {
-    if (element.newPosition.compare(p)) {
-      find = true;
-      pos = element.newPosition;
-      old = element.pieceCaptured;
-      return;
-    }
-  });
-
-  if (find) {
-    board[pos.row][pos.column] = currentPlayer;
-
-    if (readyToMove !== null) {
-      board[readyToMove.row][readyToMove.column] = 0;
-    }
-
-    if (old !== null) {
-      board[old.row][old.column] = 0;
-    }
-
-    readyToMove = null;
-    capturedPosition = [];
-    posNewPosition = [];
-    displayCurrentPlayer();
-    buildBoard();
-    checkForWin(); // Check for a win after every move
-  } else {
-    buildBoard();
+  if (board[p.row][p.column] === 0) {
+    board[p.row][p.column] = currentPlayer;
   }
+  board[old.capturedRow][old.capturedColumn] = 0;
+  if (readyToMove !== null) {
+    board[readyToMove.row][readyToMove.column] = 0;
+  }
+
+  readyToMove = null;
+  capturedPosition = [];
+  posNewPosition = [];
+  coordinates = null;
+  displayCurrentPlayer();
+  buildBoard();
+  checkForWin(); // Check for a win after every move
+
 }
 
 function enableToMove(p) {
   let find = false;
   let newPosition = null;
+  console.log(posNewPosition)
   // check if the case where the player play the selected piece can move on
   posNewPosition.forEach((element) => {
     if (element.compare(p)) {
@@ -178,37 +188,73 @@ function enableToMove(p) {
       return;
     }
   });
-
+  console.log(find)
   if (find) moveThePiece(newPosition);
   else buildBoard();
 }
 
 function moveThePiece(newPosition) {
+  console.log(newPosition)
+  console.log('ready', readyToMove)
   board[newPosition.row][newPosition.column] = currentPlayer;
   board[readyToMove.row][readyToMove.column] = 0;
+
+  // init value
+  readyToMove = null;
+  posNewPosition = [];
+  capturedPosition = [];
+  coordinates = null;
+
+  currentPlayer = reverse(currentPlayer);
+
+  displayCurrentPlayer();
+  buildBoard();
+}
+
+function findCapturedPossibleMove(p, player, coordinates) {
+
+  coordinates.forEach(c => markPossiblePosition(p, player, c.column, c.row, true))
+  readyToMove = p;
+
 }
 
 function findPossibleNewPosition(piece, player) {
   if (board[piece.row + player][piece.column + 1] === 0) {
+    console.log('1', board[piece.row + player][piece.column + 1])
     readyToMove = piece;
     markPossiblePosition(piece, player, 1);
   }
-
   if (board[piece.row + player][piece.column - 1] === 0) {
+    console.log('2', board[piece.row + player][piece.column + 1])
     readyToMove = piece;
     markPossiblePosition(piece, player, -1);
   }
+
+
 }
 
-function markPossiblePosition(p, player = 0, direction = 0) {
-  attribute = parseInt(p.row + player) + "-" + parseInt(p.column + direction);
+function markPossiblePosition(p, player = 0, column = 0, row = 0, capture) {
 
-  position = document.querySelector("[data-position='" + attribute + "']");
-  if (position) {
-    position.style.background = "green";
-    // // save where it can move
-    posNewPosition.push(new Piece(p.row + player, p.column + direction));
+  if (capture) {
+    attribute = `${row}-${column}`
+    position = document.querySelector("[data-position='" + attribute + "']");
+    if (position) {
+      position.style.background = "blue";
+      // // save where it can move
+      capturedPosition.push(new Piece(p.row + player, p.column + column));
+    }
+  } else {
+    attribute = parseInt(p.row + player + row) + "-" + parseInt(p.column + column);
+    position = document.querySelector("[data-position='" + attribute + "']");
+    if (position) {
+      position.style.background = "blue";
+      // // save where it can move
+      posNewPosition.push(new Piece(p.row + player, p.column + column));
+    }
   }
+
+
+  console.log(position)
 }
 
 function displayCurrentPlayer() {
@@ -221,27 +267,27 @@ function displayCurrentPlayer() {
 }
 
 function findPieceCaptured(p, player) {
-  let found = false;
+  let found = [];
   if (p.row >= 2 && p.column >= 2) {
     if (
       board[p.row - 1][p.column - 1] === player &&
       board[p.row - 2][p.column - 2] === 0
     ) {
-      found = true;
+      found.push({ row: p.row - 2, column: (p.column - 2) }, { capturedRow: p.row - 1, capturedColumn: p.column - 1 });
     }
     if (
       p.column + 2 < board[p.row - 1].length &&
       board[p.row - 1][p.column + 1] === player &&
       board[p.row - 2][p.column + 2] === 0
     ) {
-      found = true;
+      found.push({ row: p.row - 2, column: p.column + 2 }, { capturedRow: p.row - 1, capturedColumn: p.column + 1 });
     }
     if (
       p.row + 2 < board.length &&
       board[p.row + 1][p.column - 1] === player &&
       board[p.row + 2][p.column - 2] === 0
     ) {
-      found = true;
+      found.push({ row: p.row + 2, column: p.column - 2 }, { capturedRow: p.row + 1, capturedColumn: p.column - 1 });
     }
     if (
       p.row + 2 < board.length &&
@@ -249,7 +295,7 @@ function findPieceCaptured(p, player) {
       board[p.row + 1][p.column + 1] === player &&
       board[p.row + 2][p.column + 2] === 0
     ) {
-      found = true;
+      found.push({ row: p.row + 2, column: p.column + 2 }, { capturedRow: p.row + 1, capturedColumn: p.column + 1 });
     }
   }
   return found;
@@ -275,6 +321,13 @@ function checkForWin() {
   }
 }
 
+function displayCounter(black, white) {
+  const blackContainer = document.getElementById("black-player-count-pieces");
+  const whiteContainer = document.getElementById("white-player-count-pieces");
+  blackContainer.innerHTML = black;
+  whiteContainer.innerHTML = white;
+}
+
 function modalClose() {
   modal.classList.remove("effect");
 }
@@ -282,3 +335,6 @@ function modalClose() {
 function reverse(player) {
   return player === BLACK_PLAYER ? WHITE_PLAYER : BLACK_PLAYER;
 }
+
+/* Initialize the game */
+buildBoard();
