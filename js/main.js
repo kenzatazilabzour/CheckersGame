@@ -131,7 +131,7 @@ function movePiece(e) {
   }
 
   if (currentPlayer === board[row][column]) {
-    player = reverse(currentPlayer);
+    let player = reverse(currentPlayer); // Declare player variable
     if (!findPieceCaptured(p, player)) {
       findPossibleNewPosition(p, player);
     }
@@ -142,7 +142,6 @@ function enableToCapture(p) {
   let find = false;
   let pos = null;
   let old = null;
-
   capturedPosition.forEach((element) => {
     if (element.newPosition.compare(p)) {
       find = true;
@@ -168,7 +167,7 @@ function enableToCapture(p) {
     posNewPosition = [];
     displayCurrentPlayer();
     buildBoard();
-    checkForWin(); // Check for a win after every move
+    checkForWin();
   } else {
     buildBoard();
   }
@@ -177,7 +176,6 @@ function enableToCapture(p) {
 function enableToMove(p) {
   let find = false;
   let newPosition = null;
-  // check if the case where the player play the selected piece can move on
   posNewPosition.forEach((element) => {
     if (element.compare(p)) {
       find = true;
@@ -186,8 +184,11 @@ function enableToMove(p) {
     }
   });
 
-  if (find) moveThePiece(newPosition);
-  else buildBoard();
+  if (find) {
+    moveThePiece(newPosition);
+  } else {
+    buildBoard();
+  }
 }
 
 function moveThePiece(newPosition) {
@@ -239,7 +240,6 @@ function displayCurrentPlayer() {
 
 function findPieceCaptured(p, player) {
   let found = false;
-
   // Capture upward-left
   if (board[p.row - 1][p.column - 1] === player && board[p.row - 2][p.column - 2] === 0) {
     // Capture is possible
@@ -252,8 +252,6 @@ function findPieceCaptured(p, player) {
       pieceCaptured: new Piece(p.row - 1, p.column - 1),
     });
   }
-
-  return found;
 }
 
 function checkForWin() {
