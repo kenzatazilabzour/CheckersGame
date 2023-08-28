@@ -52,10 +52,10 @@ This is a web-based implementation of the classic game of Checkers. The game is 
 
 _The Checkers game in action._
 
-![Game Play](../img/game.png)
-![Screenshot 1](../img/1.png)
-![Screenshot 2](../img/2.png)
-![screenshot 3](../img/3.png)
+![Game Play](img/game.png)
+![Screenshot 1](img/1.png)
+![Screenshot 2](img/2.png)
+![screenshot 3](img/3.png)
 
 
 ## Technologies Used
