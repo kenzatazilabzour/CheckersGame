@@ -1,0 +1,44 @@
+
+Display:
+1. Draw the game board using HTML/CSS.
+2. Display the pieces as different colored symbols. Black & White
+3. Have a scoring panel with player 1 and player 2
+4. Create with jQuery the rules of the game
+
+Initialize the Game:
+1. Create an 8x8 grid representing the game board.
+2. Populate the grid with black and white squares.
+3. Set up initial positions for pieces.
+4.Ask the current player to select a piece to move.
+
+Game Loop:
+1. Display the game board.
+2. Ask the current player for their move.
+3. Validate the move:
+   a. Check if the selected piece belongs to the current player.
+   b. Check if the move is valid according to the rules of checkers.
+4. Make the move on the board.
+5. Check for captures:
+   a. If a capture is possible, prompt the player to choose a capture.
+   b. Remove captured pieces from the board.
+   c. Check for multiple captures (chain captures).
+6. Check for victory conditions:
+   a. If one player has no more pieces or no legal moves, the other player wins.
+7. Switch to the other player's turn.
+
+Validation Keys:
+1. Check if the destination square is empty.
+2. Check if the move is diagonal.
+3. Check if the move distance is valid (1 or 2 squares, depending on whether it's a regular move or a capture).
+4. If it's a capture, check if the destination square has an opponent's piece and if there's an empty square behind it.
+5. If the piece reaches the last row on the opponent's side, crown it as a "king".
+
+Input Handling:
+1. Use event listeners to capture player input (clicks on the board).
+2. Translate the clicked position to the corresponding board coordinates.
+
+Features :
+1. Implement multiplayer functionality.
+2. Add animations for piece movement and capturing.
+3. Implement a scoring system.
+4. User Message : It will display a player feedback , such as invalid moves, captures, and game outcomes.
